@@ -3,18 +3,18 @@ import java.io.*;
 
 
 public class Lab2 {
-	
+	static int numHU = 10;
 	
 	static ArrayList<String> content = null;
 	static HashMap<Character, Integer> map = null;
 	static double bias = -1;
 	static double[][] table = new double[17][21];
-	static double[] huOutput = new double[3];
+	static double[] huOutput = new double[numHU];
 	static double[] output = new double[3];
 	// weight from input to hidden units
-	static double[][] inToHu = new double[3][358];
+	static double[][] inToHu = new double[numHU][358];
 	// weight from hidden units to output
-	static double[][] huToOut = new double[3][4];
+	static double[][] huToOut = new double[3][numHU+1];
 	static ArrayList<int[]> teacher = null;
 	// for h,e,_
 	static HashMap<Character, Integer> l = null;
@@ -28,12 +28,13 @@ public class Lab2 {
 		initWeight();
 		input(args[0]);
 		int epoch = 0;
-		while(epoch < 100){
+		while(epoch < 1000){
 			// every str is a protein
-			run(content,prediction, false);
-			//testTrain();
+			run(content, prediction, false);
+			System.out.print("train: ");
+			testTrain();
 			//test
-			run(test,predictionForTest, true);
+			run(test, predictionForTest, true);
 			double count = 0;
 			double correct = 0;
 			for(int i = 0 ; i < predictionForTest.size(); i++){
@@ -42,7 +43,9 @@ public class Lab2 {
 					count++;
 				}
 			}
-			if(epoch==0||epoch==99) System.out.println(correct/count);
+			System.out.print("test: ");
+			System.out.println(correct/count);
+			System.out.println();
 //			for(int i = 0; i < 3;i++){
 //				for(int j = 0; j < 4;j++){
 //					System.out.println(huToOut[i][j]);
@@ -173,7 +176,7 @@ public class Lab2 {
 		for(int i = 0; i < 3; i++){
 			deltaI = output[i]*(1-output[i])*(teacher.get(protein)[amino]-output[i]);
 			double deltaJ = 0;
-			for(int j = 0; j < 3; j++){
+			for(int j = 0; j < numHU; j++){
 				if(huOutput[j]>0){
 					double sum = 0;
 					for(int num = 0; num < 3; num++){
@@ -181,18 +184,18 @@ public class Lab2 {
 					}
 					deltaJ = deltaI*sum;
 					// update weight ij
-					huToOut[i][j] += 0.25*deltaI*huOutput[j];
+					huToOut[i][j] += 0.1*deltaI*huOutput[j];
 				}
 				for(int k = 0; k < 357; k++){
 					int row = k/21;
 					int col = k%21;
-					inToHu[j][k] += 0.25*deltaJ*table[row][col];
+					inToHu[j][k] += 0.1*deltaJ*table[row][col];
 				}
 				//update bias
-				inToHu[j][357] += 0.25*deltaJ*(-1);
+				inToHu[j][357] += 0.1*deltaJ*(-1);
 			}
 			// update bias
-			huToOut[i][3] += 0.25*deltaI*(-1);
+			huToOut[i][numHU] += 0.1*deltaI*(-1);
 		}
 		
 	}
@@ -201,7 +204,7 @@ public class Lab2 {
 	public static int forward(int protein, int amino){
 		// from input to hu
 		double output_hu = 0;
-		for(int k = 0; k < 3; k++){
+		for(int k = 0; k < numHU; k++){
 			for(int i = 0; i < table.length; i++){
 				for(int j = 0; j < table[0].length; j++){
 					output_hu += table[i][j]*inToHu[k][i*21+j];
@@ -214,10 +217,10 @@ public class Lab2 {
 		// from hu to output
 		double output_out = 0;
 		for(int k = 0; k < 3; k++){
-			for(int i = 0; i < 3; i++){
+			for(int i = 0; i < numHU; i++){
 				output_out += huOutput[i]*huToOut[k][i];
 			}
-			output_out += -1*huToOut[k][3];
+			output_out += -1*huToOut[k][numHU];
 			output[k] = sigmoid(output_out);
 		}
 		int out = -1;
