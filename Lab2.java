@@ -3,11 +3,13 @@ import java.io.*;
 
 
 public class Lab2 {
-	static int numHU = 5;
+	static int numHU = 7;
 	
 	static ArrayList<String> content = null;
 	static HashMap<Character, Integer> map = null;
 	static double bias = -1;
+	static double[][] inToHu_mo = new double[numHU][358];
+	static double[][] huToOut_mo = new double[3][numHU+1];
 	static double[][] table = new double[17][21];
 	static double[] huOutput = new double[numHU];
 	static double[] output = new double[3];
@@ -22,16 +24,19 @@ public class Lab2 {
 	static ArrayList<int[]> teacherForTest = null;
 	static ArrayList<int[]> predictionForTest = null;
 	static ArrayList<String> test = null;
-	
+	static ArrayList<int[]> teacherForTune = null;
+	static ArrayList<int[]> predictionForTune = null;
+	static ArrayList<String> tune = null;
 	public static void main(String[] args){
 		setup();
 		initWeight();
 		input(args[0]);
 		int epoch = 0;
-		while(epoch < 800){
+		while(true){
 			// every str is a protein
 			run(content, prediction, false);
 			run(test, predictionForTest, true);
+			run(tune, predictionForTune, true);
 			
 
 			
@@ -48,7 +53,29 @@ public class Lab2 {
 			}
 			System.out.print("test: ");
 			System.out.println(correct/count);
+			double testRate = correct/count;
+			
+			count = 0;
+			correct = 0;
+			for(int i = 0 ; i < predictionForTune.size(); i++){
+				for(int j = 0; j < predictionForTune.get(i).length; j++){
+					if(predictionForTune.get(i)[j]==teacherForTune.get(i)[j]) correct++;
+					count++;
+				}
+			}
+			System.out.print("tune: ");
+			System.out.println(correct/count);
 			System.out.println();
+			double tuneRate = correct/count;
+			
+			if(testRate>=0.58&&tuneRate>=0.58&&epoch >= 50){
+				System.out.println(epoch);
+				System.exit(1);
+			}
+			if(epoch == 500){
+				System.out.println(epoch);
+				System.exit(1);
+			}
 			
 			epoch++;
 		}
@@ -233,12 +260,12 @@ public class Lab2 {
 	public static void initWeight(){
 		for(int i = 0; i < inToHu.length; i++){
 			for(int j = 0; j < inToHu[0].length; j++){
-				inToHu[i][j] = -0.3+Math.random()*0.6;
+				inToHu[i][j] = -0.2+Math.random()*0.4;
 			}
 		}
 		for(int i = 0; i < huToOut.length; i++){
 			for(int j = 0; j < huToOut[0].length; j++){
-				huToOut[i][j] = -0.3+Math.random()*0.6;
+				huToOut[i][j] = -0.2+Math.random()*0.4;
 			}
 		}
 	}
@@ -291,6 +318,9 @@ public class Lab2 {
 		test = new ArrayList<String>();
 		teacherForTest = new ArrayList<int[]>();
 		predictionForTest = new ArrayList<int[]>();
+		tune = new ArrayList<String>();
+		teacherForTune = new ArrayList<int[]>();
+		predictionForTune = new ArrayList<int[]>();
 		while(in.hasNext()){
 			String line = in.nextLine();
 			if(line.length()==0) continue;
@@ -298,7 +328,7 @@ public class Lab2 {
 			if(line.startsWith("<")||line.startsWith("end")){
 				if(element.length()!=0){
 					if((count)%5==0){
-						
+						tune.add(element);
 					}
 					else if((count-1)%5 == 0 && count!=1){
 						test.add(element);
@@ -330,6 +360,15 @@ public class Lab2 {
 			}
 			teacherForTest.add(label);
 			predictionForTest.add(new int[amino.length]);
+		}
+		for(String str:tune){
+			String[] amino = str.split("-");
+			int[] label = new int[amino.length];
+			for(int i = 0; i < amino.length; i++){
+				label[i] = l.get(amino[i].charAt(2));
+			}
+			teacherForTune.add(label);
+			predictionForTune.add(new int[amino.length]);
 		}
 		
 	}
