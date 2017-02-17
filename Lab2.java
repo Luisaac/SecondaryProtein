@@ -33,7 +33,7 @@ public class Lab2 {
 			run(content, prediction, false);
 			run(test, predictionForTest, true);
 			
-			/* test
+
 			System.out.print("train: ");
 			testTrain();
 			
@@ -48,23 +48,23 @@ public class Lab2 {
 			System.out.print("test: ");
 			System.out.println(correct/count);
 			System.out.println();
-			*/
+			
 			epoch++;
 		}
-		for(int i = 0; i <predictionForTest.size();i++){
-			for(int j = 0; j < predictionForTest.get(i).length; j++){
-				int ret = predictionForTest.get(i)[j];
-				if(ret == 0){
-					System.out.println('h');
-				}
-				else if(ret == 1){
-					System.out.println('e');
-				}
-				else{
-					System.out.println('_');
-				}
-			}
-		}
+//		for(int i = 0; i <predictionForTest.size();i++){
+//			for(int j = 0; j < predictionForTest.get(i).length; j++){
+//				int ret = predictionForTest.get(i)[j];
+//				if(ret == 0){
+//					System.out.println('h');
+//				}
+//				else if(ret == 1){
+//					System.out.println('e');
+//				}
+//				else{
+//					System.out.println('_');
+//				}
+//			}
+//		}
 	}
 	public static void run(ArrayList<String> content, ArrayList<int[]> prediction, boolean testFlag){
 		for(int l = 0; l < content.size(); l++){
