@@ -3,7 +3,7 @@ import java.io.*;
 
 
 public class Lab2 {
-	static int numHU = 10;
+	static int numHU = 5;
 	
 	static ArrayList<String> content = null;
 	static HashMap<Character, Integer> map = null;
@@ -28,13 +28,15 @@ public class Lab2 {
 		initWeight();
 		input(args[0]);
 		int epoch = 0;
-		while(epoch < 1000){
+		while(epoch < 800){
 			// every str is a protein
 			run(content, prediction, false);
+			run(test, predictionForTest, true);
+			
+			/* test
 			System.out.print("train: ");
 			testTrain();
-			//test
-			run(test, predictionForTest, true);
+			
 			double count = 0;
 			double correct = 0;
 			for(int i = 0 ; i < predictionForTest.size(); i++){
@@ -46,13 +48,22 @@ public class Lab2 {
 			System.out.print("test: ");
 			System.out.println(correct/count);
 			System.out.println();
-//			for(int i = 0; i < 3;i++){
-//				for(int j = 0; j < 4;j++){
-//					System.out.println(huToOut[i][j]);
-//				}
-//			}
-//			System.out.println();
+			*/
 			epoch++;
+		}
+		for(int i = 0; i <predictionForTest.size();i++){
+			for(int j = 0; j < predictionForTest.get(i).length; j++){
+				int ret = predictionForTest.get(i)[j];
+				if(ret == 0){
+					System.out.println('h');
+				}
+				else if(ret == 1){
+					System.out.println('e');
+				}
+				else{
+					System.out.println('_');
+				}
+			}
 		}
 	}
 	public static void run(ArrayList<String> content, ArrayList<int[]> prediction, boolean testFlag){
@@ -116,47 +127,6 @@ public class Lab2 {
 	}
 	
 
-//	public static void testSet(String file){
-//		Scanner in = null;
-//		try{
-//			in = new Scanner(new File(file));
-//		}
-//		catch(FileNotFoundException e){
-//			System.out.println("Cannot find file" + file);
-//			System.exit(1);
-//		}
-//
-//		// input every line to ArrayList
-//		content = new ArrayList<String>();
-//		String element = "";
-//		while(in.hasNext()){
-//			String line = in.nextLine();
-//			if(line.length()==0) continue;
-//			if(line.charAt(0)=='#') continue;
-//			if(line.startsWith("<")||line.startsWith("end")){
-//				if(element.length()!=0) content.add(element);
-//				element = "";
-//			}
-//			else{
-//				element+=(line+"-");
-//			}
-//		}
-//		ArrayList<int[]> golden = new ArrayList<>();
-//		ArrayList<int []> prediction2 = new ArrayList<>();
-//		for(String str:content){
-//			String[] amino = str.split("-");
-//			int[] label = new int[amino.length];
-//			for(int i = 0; i < amino.length; i++){
-//				label[i] = l.get(amino[i].charAt(2));
-//			}
-//			golden.add(label);
-//			prediction2.add(new int[amino.length]);
-//		}
-//
-//
-//
-//	}
-
 	public static void testTrain(){
 		double correct = 0;
 		double count = 0;
@@ -172,32 +142,38 @@ public class Lab2 {
 	}
 	//public static double 
 	public static void backward(int protein, int amino){
-		double deltaI = 0;
-		for(int i = 0; i < 3; i++){
-			deltaI = output[i]*(1-output[i])*(teacher.get(protein)[amino]-output[i]);
-			double deltaJ = 0;
-			for(int j = 0; j < numHU; j++){
-				if(huOutput[j]>0){
-					double sum = 0;
-					for(int num = 0; num < 3; num++){
-						sum += huToOut[num][j];
-					}
-					deltaJ = deltaI*sum;
-					// update weight ij
-					huToOut[i][j] += 0.1*deltaI*huOutput[j];
-				}
-				for(int k = 0; k < 357; k++){
-					int row = k/21;
-					int col = k%21;
-					inToHu[j][k] += 0.1*deltaJ*table[row][col];
-				}
-				//update bias
-				inToHu[j][357] += 0.1*deltaJ*(-1);
+	
+		double[] deltaI = new double[3];
+		for(int i = 0; i < 3; i++) deltaI[i] = output[i]*(1-output[i])*(teacher.get(protein)[amino]-output[i]);
+		double[] deltaJ = new double[numHU];
+//		for(int i = 0; i < numHU; i++){
+//			if(huOutput[i]>0){
+//				for(int j = 0; j < 3; j++){
+//					deltaJ[i]+= huToOut[j][i]*deltaI[j];
+//				}
+//			}
+//		}
+		for(int i = 0 ; i < numHU;i++) {
+			for(int j = 0; j < 3;j++){
+				deltaJ[i] += deltaI[j]*huToOut[j][i];
 			}
-			// update bias
-			huToOut[i][numHU] += 0.1*deltaI*(-1);
+			deltaJ[i] = deltaJ[i]*huOutput[i]*(1-huOutput[i]);
 		}
-		
+		//update weight
+		for(int i = 0; i < 3; i++){
+			for(int j = 0; j < numHU; j++){
+				huToOut[i][j] += 0.1*deltaI[i]*huOutput[j];
+			}
+			huToOut[i][numHU] += 0.1*deltaI[i]*(-1);
+		}
+		for(int j = 0; j < numHU; j++){
+			for(int k = 0; k < 357; k++){
+				int row = k/21;
+				int col = k%21;
+				inToHu[j][k] +=0.1*deltaJ[j]*table[row][col];
+			}
+			inToHu[j][357] +=0.1*deltaJ[j]*(-1);
+		}
 	}
 	
 	
@@ -211,7 +187,7 @@ public class Lab2 {
 				}
 			}
 			output_hu += -1*inToHu[k][357];
-			huOutput[k] = rectify(output_hu);
+			huOutput[k] = sigmoid(output_hu);
 		}
 		
 		// from hu to output
@@ -299,7 +275,7 @@ public class Lab2 {
 			if(line.charAt(0)=='#') continue;
 			if(line.startsWith("<")||line.startsWith("end")){
 				if(element.length()!=0){
-					if(count%5==0){
+					if((count)%5==0){
 						
 					}
 					else if((count-1)%5 == 0){
