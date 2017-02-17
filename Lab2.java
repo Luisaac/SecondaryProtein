@@ -160,7 +160,11 @@ public class Lab2 {
 	public static void backward(int protein, int amino){
 	
 		double[] deltaI = new double[3];
-		for(int i = 0; i < 3; i++) deltaI[i] = output[i]*(1-output[i])*(teacher.get(protein)[amino]-output[i]);
+		for(int i = 0; i < 3; i++){
+			int offset = 0;
+			if(teacher.get(protein)[amino]==i) offset = 1;
+			deltaI[i] = output[i]*(1-output[i])*(offset-output[i]);
+		}
 		double[] deltaJ = new double[numHU];
 		// rectify
 		for(int i = 0; i < numHU; i++){
