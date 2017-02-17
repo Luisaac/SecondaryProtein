@@ -71,8 +71,10 @@ public class Lab2 {
 
 
 					forward(l,i);
-					test();
+
 					backward(l,i);
+
+
 
 
 					for(int k = 0; k < 17; k++){
@@ -82,11 +84,59 @@ public class Lab2 {
 					}
 				}
 			}
+			testTrain();
+//			for(int i = 0; i < 3;i++){
+//				for(int j = 0; j < 4;j++){
+//					System.out.println(huToOut[i][j]);
+//				}
+//			}
+//			System.out.println();
 			epoch++;
 		}
 	}
-	
-	public static void test(){
+
+//	public static void testSet(String file){
+//		Scanner in = null;
+//		try{
+//			in = new Scanner(new File(file));
+//		}
+//		catch(FileNotFoundException e){
+//			System.out.println("Cannot find file" + file);
+//			System.exit(1);
+//		}
+//
+//		// input every line to ArrayList
+//		content = new ArrayList<String>();
+//		String element = "";
+//		while(in.hasNext()){
+//			String line = in.nextLine();
+//			if(line.length()==0) continue;
+//			if(line.charAt(0)=='#') continue;
+//			if(line.startsWith("<")||line.startsWith("end")){
+//				if(element.length()!=0) content.add(element);
+//				element = "";
+//			}
+//			else{
+//				element+=(line+"-");
+//			}
+//		}
+//		ArrayList<int[]> golden = new ArrayList<>();
+//		ArrayList<int []> prediction2 = new ArrayList<>();
+//		for(String str:content){
+//			String[] amino = str.split("-");
+//			int[] label = new int[amino.length];
+//			for(int i = 0; i < amino.length; i++){
+//				label[i] = l.get(amino[i].charAt(2));
+//			}
+//			golden.add(label);
+//			prediction2.add(new int[amino.length]);
+//		}
+//
+//
+//
+//	}
+
+	public static void testTrain(){
 		double correct = 0;
 		double count = 0;
 		for(int i = 0; i < teacher.size();i++){
@@ -113,18 +163,18 @@ public class Lab2 {
 					}
 					deltaJ = deltaI*sum;
 					// update weight ij
-					huToOut[i][j] = 0.1*deltaI*huOutput[j];
+					huToOut[i][j] += 0.1*deltaI*huOutput[j];
 				}
 				for(int k = 0; k < 357; k++){
 					int row = k/21;
 					int col = k%21;
-					inToHu[j][k] = 0.1*deltaJ*table[row][col];
+					inToHu[j][k] += 0.1*deltaJ*table[row][col];
 				}
 				//update bias
-				inToHu[j][357] = 0.1*deltaJ*(-1);
+				inToHu[j][357] += 0.1*deltaJ*(-1);
 			}
 			// update bias
-			huToOut[i][3] = 0.1*deltaI*(-1);
+			huToOut[i][3] += 0.1*deltaI*(-1);
 		}
 		
 	}
