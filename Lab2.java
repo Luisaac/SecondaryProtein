@@ -3,7 +3,7 @@ import java.io.*;
 
 
 public class Lab2 {
-	static int numHU = 7;
+	static int numHU = 10;
 	
 	static ArrayList<String> content = null;
 	static HashMap<Character, Integer> map = null;
@@ -32,7 +32,7 @@ public class Lab2 {
 		initWeight();
 		input(args[0]);
 		int epoch = 0;
-		while(true){
+		while(epoch<500){
 			// every str is a protein
 			run(content, prediction, false);
 			run(test, predictionForTest, true);
@@ -41,8 +41,8 @@ public class Lab2 {
 
 			
 			
-			System.out.print("train: ");
-			testTrain();
+//			System.out.print("train: ");
+//			testTrain();
 			double count = 0;
 			double correct = 0;
 			for(int i = 0 ; i < predictionForTest.size(); i++){
@@ -51,8 +51,8 @@ public class Lab2 {
 					count++;
 				}
 			}
-			System.out.print("test: ");
-			System.out.println(correct/count);
+//			System.out.print("test: ");
+//			System.out.println(correct/count);
 			double testRate = correct/count;
 			
 			count = 0;
@@ -63,38 +63,35 @@ public class Lab2 {
 					count++;
 				}
 			}
-			System.out.print("tune: ");
-			System.out.println(correct/count);
-			System.out.println();
+//			System.out.print("tune: ");
+//			System.out.println(correct/count);
+//			System.out.println();
 			double tuneRate = correct/count;
 			
 			if(testRate>=0.58&&tuneRate>=0.58&&epoch >= 50){
 				System.out.println(epoch);
-				System.exit(1);
+				break;
 			}
-			if(epoch == 500){
-				System.out.println(epoch);
-				System.exit(1);
-			}
+		
 			
 			epoch++;
 		}
 		
 		
-//		for(int i = 0; i <predictionForTest.size();i++){
-//			for(int j = 0; j < predictionForTest.get(i).length; j++){
-//				int ret = predictionForTest.get(i)[j];
-//				if(ret == 0){
-//					System.out.println('h');
-//				}
-//				else if(ret == 1){
-//					System.out.println('e');
-//				}
-//				else{
-//					System.out.println('_');
-//				}
-//			}
-//		}
+		for(int i = 0; i <predictionForTest.size();i++){
+			for(int j = 0; j < predictionForTest.get(i).length; j++){
+				int ret = predictionForTest.get(i)[j];
+				if(ret == 0){
+					System.out.println('h');
+				}
+				else if(ret == 1){
+					System.out.println('e');
+				}
+				else{
+					System.out.println('_');
+				}
+			}
+		}
 	}
 	public static void run(ArrayList<String> content, ArrayList<int[]> prediction, boolean testFlag){
 		for(int l = 0; l < content.size(); l++){
@@ -208,7 +205,8 @@ public class Lab2 {
 //			}
 //			deltaJ[i] = deltaJ[i]*huOutput[i]*(1-huOutput[i]);
 //		}
-		//update weight
+		
+		// update weight
 		for(int i = 0; i < 3; i++){
 			for(int j = 0; j < numHU; j++){
 				huToOut[i][j] += 0.1*deltaI[i]*huOutput[j];
@@ -223,6 +221,50 @@ public class Lab2 {
 			}
 			inToHu[j][357] +=0.1*deltaJ[j]*(-1);
 		}
+		
+		// update weight with weight decay
+//		for(int i = 0; i < 3; i++){
+//			for(int j = 0; j < numHU; j++){
+//				huToOut[i][j] += 0.1*deltaI[i]*huOutput[j] - 0.05*huToOut[i][j];
+//			}
+//			huToOut[i][numHU] += 0.1*deltaI[i]*(-1) - 0.05*huToOut[i][numHU];
+//		}
+//		for(int j = 0; j < numHU; j++){
+//			for(int k = 0; k < 357; k++){
+//				int row = k/21;
+//				int col = k%21;
+//				inToHu[j][k] +=0.1*deltaJ[j]*table[row][col] - 0.05*inToHu[j][k]; 
+//			}
+//			inToHu[j][357] +=0.1*deltaJ[j]*(-1) - 0.05*inToHu[j][357];
+//		}
+		
+		
+		
+		
+		// update weight with momentum
+//		for(int i = 0; i < 3; i++){
+//			for(int j = 0; j < numHU; j++){
+//				double update = 0.01*deltaI[i]*huOutput[j] + 0.9*huToOut_mo[i][j];
+//				huToOut[i][j] += update;
+//				huToOut_mo[i][j] = update;
+//			}
+//			double update = 0.01*deltaI[i]*(-1) + 0.9*huToOut_mo[i][numHU];
+//			huToOut[i][numHU] += update;
+//			huToOut_mo[i][numHU] = update;
+//		}
+//		for(int j = 0; j < numHU; j++){
+//			for(int k = 0; k < 357; k++){
+//				int row = k/21;
+//				int col = k%21;
+//				double update = 0.01*deltaJ[j]*table[row][col]+0.9*inToHu_mo[j][k];
+//				inToHu[j][k] += update;
+//				inToHu_mo[j][k] = update;
+//				
+//			}
+//			double update = 0.01*deltaJ[j]*-1+0.9*inToHu_mo[j][357];
+//			inToHu[j][357] += update;
+//			inToHu_mo[j][357] = update;
+//		}
 	}
 	
 	
@@ -260,12 +302,12 @@ public class Lab2 {
 	public static void initWeight(){
 		for(int i = 0; i < inToHu.length; i++){
 			for(int j = 0; j < inToHu[0].length; j++){
-				inToHu[i][j] = -0.2+Math.random()*0.4;
+				inToHu[i][j] = -0.3+Math.random()*0.6;
 			}
 		}
 		for(int i = 0; i < huToOut.length; i++){
 			for(int j = 0; j < huToOut[0].length; j++){
-				huToOut[i][j] = -0.2+Math.random()*0.4;
+				huToOut[i][j] = -0.3+Math.random()*0.6;
 			}
 		}
 	}
