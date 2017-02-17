@@ -19,6 +19,9 @@ public class Lab2 {
 	// for h,e,_
 	static HashMap<Character, Integer> l = null;
 	static ArrayList<int[]> prediction = new ArrayList<int[]>();
+	static ArrayList<int[]> teacherForTest = null;
+	static ArrayList<int[]> predictionForTest = null;
+	static ArrayList<String> test = null;
 	
 	public static void main(String[] args){
 		setup();
@@ -27,64 +30,19 @@ public class Lab2 {
 		int epoch = 0;
 		while(epoch < 100){
 			// every str is a protein
-			for(int l = 0; l < content.size(); l++){
-				String str = content.get(l);
-				String[] amino = str.split("-");
-				for(int i = 0; i < amino.length; i++){
-					int offset1 = i-8;
-					int offset2 = i+8;
-					// out of edge
-					if(offset1<0&&offset2>=amino.length){
-						for(int j = 0; j < Math.abs(offset1); j++){
-							table[j][20] = 1;
-						}
-						for(int j = Math.abs(offset1); j < 17-(offset2-amino.length+1); j++){
-							table[j][map.get(amino[j-Math.abs(offset1)].charAt(0))] = 1; 
-						}
-						for(int j = 17-(offset2-amino.length+1); j<17; j++){
-							table[j][20] = 1;
-						}
-					}
-					else if(offset1<0){
-						int num = Math.abs(offset1);
-						for(int j = 0; j < num; j++){
-							table[j][20] = 1;
-						}
-						for(int j = num; j < 17; j++){
-							table[j][map.get(amino[j-num].charAt(0))] = 1; 
-						}
-					}
-					else if(offset2>=amino.length){
-						int num = offset2-amino.length+1;
-						for(int j = 0; j < 17-num; j++){
-							table[j][map.get(amino[i-8+j].charAt(0))] = 1;
-						}
-						for(int j = 17-num; j < 17; j++){
-							table[j][20] = 1;
-						}
-					}
-					else{
-						for(int j = 0; j < 17; j++){
-							table[j][map.get(amino[i-8+j].charAt(0))] = 1;
-						}
-					}
-
-
-					forward(l,i);
-
-					backward(l,i);
-
-
-
-
-					for(int k = 0; k < 17; k++){
-						for(int j = 0; j < 21; j++){
-							table[k][j] = 0;
-						}
-					}
+			run(content,prediction, false);
+			//testTrain();
+			//test
+			run(test,predictionForTest, true);
+			double count = 0;
+			double correct = 0;
+			for(int i = 0 ; i < predictionForTest.size(); i++){
+				for(int j = 0; j < predictionForTest.get(i).length; j++){
+					if(predictionForTest.get(i)[j]==teacherForTest.get(i)[j]) correct++;
+					count++;
 				}
 			}
-			testTrain();
+			if(epoch==0||epoch==99) System.out.println(correct/count);
 //			for(int i = 0; i < 3;i++){
 //				for(int j = 0; j < 4;j++){
 //					System.out.println(huToOut[i][j]);
@@ -94,6 +52,66 @@ public class Lab2 {
 			epoch++;
 		}
 	}
+	public static void run(ArrayList<String> content, ArrayList<int[]> prediction, boolean testFlag){
+		for(int l = 0; l < content.size(); l++){
+			String str = content.get(l);
+			String[] amino = str.split("-");
+			for(int i = 0; i < amino.length; i++){
+				int offset1 = i-8;
+				int offset2 = i+8;
+				// out of edge
+				if(offset1<0&&offset2>=amino.length){
+					for(int j = 0; j < Math.abs(offset1); j++){
+						table[j][20] = 1;
+					}
+					for(int j = Math.abs(offset1); j < 17-(offset2-amino.length+1); j++){
+						table[j][map.get(amino[j-Math.abs(offset1)].charAt(0))] = 1; 
+					}
+					for(int j = 17-(offset2-amino.length+1); j<17; j++){
+						table[j][20] = 1;
+					}
+				}
+				else if(offset1<0){
+					int num = Math.abs(offset1);
+					for(int j = 0; j < num; j++){
+						table[j][20] = 1;
+					}
+					for(int j = num; j < 17; j++){
+						table[j][map.get(amino[j-num].charAt(0))] = 1; 
+					}
+				}
+				else if(offset2>=amino.length){
+					int num = offset2-amino.length+1;
+					for(int j = 0; j < 17-num; j++){
+						table[j][map.get(amino[i-8+j].charAt(0))] = 1;
+					}
+					for(int j = 17-num; j < 17; j++){
+						table[j][20] = 1;
+					}
+				}
+				else{
+					for(int j = 0; j < 17; j++){
+						table[j][map.get(amino[i-8+j].charAt(0))] = 1;
+					}
+				}
+
+
+				prediction.get(l)[i] = 	forward(l,i);
+			//	forward(l,i);
+				if(!testFlag) backward(l,i);
+
+
+
+
+				for(int k = 0; k < 17; k++){
+					for(int j = 0; j < 21; j++){
+						table[k][j] = 0;
+					}
+				}
+			}
+		}
+	}
+	
 
 //	public static void testSet(String file){
 //		Scanner in = null;
@@ -163,24 +181,24 @@ public class Lab2 {
 					}
 					deltaJ = deltaI*sum;
 					// update weight ij
-					huToOut[i][j] += 0.1*deltaI*huOutput[j];
+					huToOut[i][j] += 0.25*deltaI*huOutput[j];
 				}
 				for(int k = 0; k < 357; k++){
 					int row = k/21;
 					int col = k%21;
-					inToHu[j][k] += 0.1*deltaJ*table[row][col];
+					inToHu[j][k] += 0.25*deltaJ*table[row][col];
 				}
 				//update bias
-				inToHu[j][357] += 0.1*deltaJ*(-1);
+				inToHu[j][357] += 0.25*deltaJ*(-1);
 			}
 			// update bias
-			huToOut[i][3] += 0.1*deltaI*(-1);
+			huToOut[i][3] += 0.25*deltaI*(-1);
 		}
 		
 	}
 	
 	
-	public static void forward(int protein, int amino){
+	public static int forward(int protein, int amino){
 		// from input to hu
 		double output_hu = 0;
 		for(int k = 0; k < 3; k++){
@@ -207,7 +225,8 @@ public class Lab2 {
 		else if (output[1]>=output[0] && output[1]>= output[2]) out = 1;
 		else out = 2;
 		
-		prediction.get(protein)[amino] = out;
+		//prediction.get(protein)[amino] = out;
+		return out;
 	}
 	
 	public static void initWeight(){
@@ -261,19 +280,31 @@ public class Lab2 {
 			in = new Scanner(new File(file));
 		}
 		catch(FileNotFoundException e){
-			System.out.println("Cannot find file" + file);
+			System.out.println("Cannot find file " + file);
 			System.exit(1);
 		}
-		
+		int count = 1;
 		// input every line to ArrayList
 		content = new ArrayList<String>();
 		String element = "";
+		test = new ArrayList<String>();
+		teacherForTest = new ArrayList<int[]>();
+		predictionForTest = new ArrayList<int[]>();
 		while(in.hasNext()){
 			String line = in.nextLine();
 			if(line.length()==0) continue;
 			if(line.charAt(0)=='#') continue;
 			if(line.startsWith("<")||line.startsWith("end")){
-				if(element.length()!=0) content.add(element);
+				if(element.length()!=0){
+					if(count%5==0){
+						
+					}
+					else if((count-1)%5 == 0){
+						test.add(element);
+					}
+					else content.add(element);
+					count++;
+				}
 				element = "";
 			}
 			else{
@@ -289,6 +320,15 @@ public class Lab2 {
 			}
 			teacher.add(label);
 			prediction.add(new int[amino.length]);
+		}
+		for(String str:test){
+			String[] amino = str.split("-");
+			int[] label = new int[amino.length];
+			for(int i = 0; i < amino.length; i++){
+				label[i] = l.get(amino[i].charAt(2));
+			}
+			teacherForTest.add(label);
+			predictionForTest.add(new int[amino.length]);
 		}
 		
 	}
